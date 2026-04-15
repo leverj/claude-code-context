@@ -1,7 +1,7 @@
 ---
 name: code-context
 description: Generate a comprehensive code-context.md file that captures deep codebase understanding — models, routes, components, stores, architecture, data flows, and key patterns. Use when starting a new project or when code-context.md is missing/outdated.
-allowed-tools: Agent Bash(ls *) Glob Grep Read Write
+allowed-tools: Agent Bash(ls *) Glob Grep Read Write Edit
 argument-hint: "[optional focus area]"
 effort: high
 ---
@@ -103,9 +103,34 @@ Write the file to `code-context.md` in the project root with this structure:
 - **Include types/enums**: State shapes, status enums, error types — these prevent bugs
 - **Skip boilerplate**: Don't document obvious framework conventions (React component lifecycle, Express middleware signature)
 
+### Step 4: Set up CLAUDE.md for auto-maintenance
+
+After generating `code-context.md`, ensure the project's `CLAUDE.md` has instructions for Claude to read and maintain it. This is what makes the system self-sustaining — Claude will automatically update `code-context.md` when making structural changes in future sessions.
+
+1. Check if `CLAUDE.md` exists in the project root
+2. If it exists, read it and check if it already has a "Code Context" section
+3. If the section is missing, append it using the Edit tool
+4. If `CLAUDE.md` doesn't exist, create it using the Write tool
+
+The section to add:
+
+```markdown
+## Code Context
+
+At the start of every session, read `code-context.md` in the project root if it exists.
+This file contains deep codebase understanding and eliminates exploratory warm-up.
+
+When you make structural changes (new/removed models, routes, components, stores, modules,
+config changes, or architectural shifts), update `code-context.md` before completing the task.
+```
+
+**This step is not optional.** Without CLAUDE.md setup, the context file becomes a one-time snapshot that goes stale. The CLAUDE.md instruction is what closes the loop — making every future session both a consumer and maintainer of the context.
+
 ## After generation
 
 Tell the user:
-1. The file has been created
-2. They should add the CLAUDE.md instruction (if not already present) to ensure Claude reads and maintains it
-3. Suggest they review the file and flag any inaccuracies or missing areas
+1. `code-context.md` has been generated at the project root
+2. `CLAUDE.md` has been set up (or updated) to auto-read and auto-maintain the context file
+3. From now on, every Claude session will start with full codebase understanding and update the file when making structural changes
+4. They can run `/update-context` manually after large refactors or to describe what changed
+5. Suggest they review the file and flag any inaccuracies or missing areas
