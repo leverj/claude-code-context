@@ -44,19 +44,56 @@ git clone https://github.com/leverj/claude-code-context.git ~/.claude/skills/cod
   rm -rf ~/.claude/skills/code-context-tmp
 ```
 
-## Setup
+## Permissions and File Changes
 
-After installing the skills, add these lines to your project's `CLAUDE.md` (create one if it doesn't exist):
+### What files will be created or modified
 
-```markdown
-## Code Context
+This skill touches exactly **two files** in your project root. Nothing else.
 
-At the start of every session, read `code-context.md` in the project root if it exists.
-This file contains deep codebase understanding and eliminates exploratory warm-up.
+| File | Action | When |
+|------|--------|------|
+| `code-context.md` | **Created** (or overwritten) | When you run `/code-context` |
+| `code-context.md` | **Edited** (targeted sections) | When you run `/update-context`, or when Claude auto-updates after structural changes |
+| `CLAUDE.md` | **Created** (if missing) or **appended to** (if exists) | Once, when you run `/code-context` — adds a "Code Context" section with read/update instructions |
 
-When you make structural changes (new/removed models, routes, components, stores, modules,
-config changes, or architectural shifts), update `code-context.md` before completing the task.
-```
+**No other files are read-write.** The skill only **reads** your source files to understand the codebase. It never modifies your source code, configs, or any other project files.
+
+### Tool permissions requested
+
+#### `/code-context` (generation)
+
+| Tool | Permission | What it does with it |
+|------|-----------|---------------------|
+| `Read` | Read any file | Reads source files, configs, READMEs to understand the codebase |
+| `Glob` | Search file patterns | Finds files by pattern (e.g., `**/*.ts`, `src/models/*.js`) |
+| `Grep` | Search file contents | Searches for keywords, exports, route definitions |
+| `Bash(ls *)` | List directories | Maps directory structure |
+| `Agent` | Spawn sub-agents | Parallelizes exploration across packages (read-only) |
+| `Write` | Write files | Creates `code-context.md` and `CLAUDE.md` (if missing) — **only these two files** |
+| `Edit` | Edit files | Appends "Code Context" section to existing `CLAUDE.md` — **only this file** |
+
+#### `/update-context` (incremental update)
+
+| Tool | Permission | What it does with it |
+|------|-----------|---------------------|
+| `Read` | Read any file | Reads changed source files to verify current state |
+| `Glob` | Search file patterns | Finds files related to the change |
+| `Grep` | Search file contents | Checks for new/removed exports, routes, models |
+| `Bash(ls *)` | List directories | Checks directory structure |
+| `Bash(git diff *)` | View git diffs | Identifies what changed recently |
+| `Bash(git log *)` | View git history | Understands recent commits |
+| `Agent` | Spawn sub-agents | Explores affected areas (read-only) |
+| `Edit` | Edit files | Updates sections of `code-context.md` — **only this file** |
+
+### What it does NOT do
+
+- Does not modify any source code files
+- Does not install dependencies or run build commands
+- Does not make git commits
+- Does not push to remote repositories
+- Does not access the network or external APIs
+- Does not read or write files outside the project root
+- Does not delete any files
 
 ## Usage
 
@@ -106,10 +143,10 @@ The skill adapts to your tech stack. It detects and documents:
 
 ## How it works
 
-1. **Exploration**: Reads package configs, directory structure, and key source files
+1. **Exploration**: Reads package configs, directory structure, and key source files (read-only)
 2. **Analysis**: Identifies models, routes, components, stores, and their relationships
-3. **Generation**: Produces a structured markdown document optimized for Claude's context window
-4. **Maintenance**: The CLAUDE.md instruction ensures Claude updates the file when making structural changes
+3. **Generation**: Writes `code-context.md` to project root and adds a "Code Context" section to `CLAUDE.md`
+4. **Maintenance**: The CLAUDE.md instruction ensures Claude reads the context on startup and updates it when making structural changes — no manual upkeep needed
 
 ## Philosophy
 
