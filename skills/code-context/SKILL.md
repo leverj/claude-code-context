@@ -134,9 +134,12 @@ At the start of every session:
 
 This file contains deep codebase understanding and eliminates exploratory warm-up.
 
-When you make structural changes (new/removed models, routes, components, stores, modules,
-config changes, or architectural shifts), update `code-context.md` before completing the task
-and set the marker to the current HEAD hash.
+When you make changes that affect anything documented in `code-context.md`, update it before
+completing the task and set the marker to the current HEAD hash. This includes structural changes
+(new/removed models, routes, components, stores, modules, config) AND behavioral changes
+(implementing a deferred feature, changing a status, adding interactions, modifying flows).
+If in doubt, scan `code-context.md` for mentions of the area you changed — stale entries
+defeat the purpose of the file.
 ```
 
 **This step is not optional.** Without CLAUDE.md setup, the context file becomes a one-time snapshot that goes stale. The CLAUDE.md instruction is what closes the loop.
