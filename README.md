@@ -13,6 +13,16 @@ A Claude Code skill that generates a persistent `code-context.md` for your proje
 git clone https://github.com/leverj/claude-code-context.git /tmp/cc && cp -r /tmp/cc/skills/* ~/.claude/skills/ && rm -rf /tmp/cc
 ```
 
+## Update
+
+Same command as install — it overwrites the existing skill files with the latest version:
+
+```bash
+git clone https://github.com/leverj/claude-code-context.git /tmp/cc && cp -r /tmp/cc/skills/* ~/.claude/skills/ && rm -rf /tmp/cc
+```
+
+Your project's `code-context.md` and `CLAUDE.md` are not affected — only the skill definition files in `~/.claude/skills/` are updated. After updating, run `/code-context init` in any project to refresh its `CLAUDE.md` section with the latest wording.
+
 ## Usage
 
 ```
