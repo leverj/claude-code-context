@@ -1,7 +1,7 @@
 ---
 name: code-context
 description: Generate and maintain a comprehensive code-context.md file that captures deep codebase understanding — models, routes, components, stores, architecture, data flows, and key patterns. Commands - init, update, uninstall.
-allowed-tools: Agent Bash(ls *) Bash(git diff *) Bash(git log *) Bash(git rev-parse *) Bash(rm -rf *) Glob Grep Read Write Edit
+allowed-tools: Agent Bash(ls *) Bash(git diff *) Bash(git log *) Bash(git rev-parse *) Bash(git ls-files *) Bash(git rm --cached *) Bash(rm -rf *) Glob Grep Read Write Edit
 argument-hint: "<init|update|uninstall> [optional focus area or description]"
 effort: high
 ---
@@ -113,7 +113,25 @@ Write the file to `code-context.md` in the project root with this structure:
 
 **The `<!-- code-context-marker: ... -->` HTML comment is critical.** It stores the git commit hash at the time of generation. This marker enables automatic change detection — at the start of future sessions, Claude compares this hash against the current HEAD to determine if the codebase has changed and the context needs updating.
 
-### Step 4: Set up CLAUDE.md for auto-maintenance
+**Do not stage or commit `code-context.md`.** The file is per-developer state and is kept out of version control (see Step 4 below). The skill must never run `git add code-context.md` or create a commit for it.
+
+### Step 4: Ensure code-context.md is gitignored
+
+`code-context.md` is auto-generated per developer and every Claude session may rewrite it with slightly different content. Committing it produces repeated merge conflicts on shared branches, so the skill keeps it out of version control.
+
+1. **Ensure `.gitignore` lists `code-context.md`:**
+   - If `.gitignore` does not exist at the project root, create it with a single line: `code-context.md`
+   - If `.gitignore` exists, read it. If it already contains `code-context.md` as its own line (exact match, ignoring leading/trailing whitespace), do nothing.
+   - Otherwise, append `code-context.md` on a new line. Preserve the existing file contents and trailing newline convention.
+
+2. **Untrack the file if it was previously committed:**
+   - Run `git ls-files --error-unmatch code-context.md` to check if it is tracked.
+   - If tracked (command exits 0), run `git rm --cached code-context.md`. This removes it from the index without deleting the working-tree file.
+   - If untracked (command exits non-zero), skip this step silently.
+
+3. **If `git rm --cached` ran, warn the user** that they must commit the untracking so other team members stop pulling the file: "I untracked `code-context.md` from git. Commit this change (`git add .gitignore && git commit -m 'gitignore code-context.md'`) so other team members stop receiving the file on pull."
+
+### Step 5: Set up CLAUDE.md for auto-maintenance
 
 After generating `code-context.md`, ensure the project's `CLAUDE.md` has instructions for Claude to read and maintain it. This is what makes the system self-sustaining.
 
@@ -158,11 +176,12 @@ defeat the purpose of the file.
 
 Tell the user:
 1. `code-context.md` has been generated at the project root
-2. `CLAUDE.md` has been set up (or updated) to auto-read and auto-maintain the context file
-3. The context file includes a git hash marker for automatic change detection
-4. From now on, every Claude session will check for codebase changes and auto-update if needed
-5. They can run `/code-context update` manually after large refactors
-6. Suggest they review the file and flag any inaccuracies or missing areas
+2. `code-context.md` has been added to `.gitignore` (and untracked from git if it was previously committed — flag this separately and remind them to commit the `.gitignore` change)
+3. `CLAUDE.md` has been set up (or updated) to auto-read and auto-maintain the context file
+4. The context file includes a git hash marker for automatic change detection
+5. From now on, every Claude session will check for codebase changes and auto-update if needed
+6. They can run `/code-context update` manually after large refactors
+7. Suggest they review the file and flag any inaccuracies or missing areas
 
 ---
 
