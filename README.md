@@ -5,7 +5,7 @@ A Claude Code skill that generates a persistent `code-context.md` for your proje
 **Why use it:**
 - Eliminates cold-start exploration — Claude knows your codebase immediately
 - Auto-updates when your code changes — tracks a git hash marker, detects drift, and updates itself
-- Team-friendly — one developer runs `init` and commits `code-context.md`, everyone else gets instant context and only incremental updates from there
+- Conflict-free — `code-context.md` is gitignored and generated per developer, so concurrent work on shared branches never produces merge conflicts on it
 
 ## Install
 
@@ -66,12 +66,15 @@ The skill adapts to your tech stack:
 
 ## Permissions and File Changes
 
-This skill touches exactly **two files** in your project root. Nothing else.
+This skill touches exactly **three files** in your project root. Nothing else.
 
 | File | Action | When |
 |------|--------|------|
 | `code-context.md` | Created / edited | `init`, `update`, or auto-update on session start |
 | `CLAUDE.md` | Created / appended / section removed | `init` adds a section, `uninstall` removes it |
+| `.gitignore` | Created / appended | `init` ensures `code-context.md` is listed |
+
+On `init`, if `code-context.md` was previously tracked in git, the skill runs `git rm --cached code-context.md` to untrack it (the working-tree file is preserved) and warns you to commit the `.gitignore` change so teammates stop pulling it.
 
 It only **reads** your source files — never modifies source code, configs, or any other project files.
 
@@ -82,6 +85,7 @@ It only **reads** your source files — never modifies source code, configs, or 
 - Does not make git commits or push to remote
 - Does not access the network or external APIs
 - Does not delete any files (uninstall leaves `code-context.md` in place)
+- Does not stage or commit `code-context.md` — it is gitignored and stays per-developer
 
 ## Philosophy
 
